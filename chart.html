@@ -1,23 +1,22 @@
 <!doctype html>
 <html>
   <head>
+    <!-- moment.js must be loaded before chart.js in order to support date parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+
+    <!-- Chart.js library and stylesheets. This chart is based on the example
+      at https://www.chartjs.org/samples/latest/scales/time/financial.html
+      and documentation at https://www.chartjs.org/docs/latest/ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" />
 
-    <style>
-      body {
-        margin: 0; padding: 0;
-      }
-      .container {
-        width: 100vw;
-        height: 100vh;
-      }
-    </style>
-
     <script>
       var BLUE = 'rgb(54, 162, 235)'
-      fetch('https://io.adafruit.com/api/v2/abachman/feeds/temperature/data/chart').
+      // get the last 7 days
+      var now = new Date().getTime()
+      var seven_days_ago = new Date(now - (7 * 24 * 3600 * 1000))
+
+      fetch('https://io.adafruit.com/api/v2/abachman/feeds/temperature/data/chart?start_time=' + seven_days_ago.toISOString()).
         then(function (response) { return response.json() }).
         then(function (json) {
           /*
@@ -25,20 +24,20 @@
           IO comes in the form:
 
             {
+              "...": "...",
               "data": [
-                [ timestamp, value ],
-                [ timestamp, value ],
+                [ timestamp string, value number as string ],
                 ...
               ]
             }
 
           With some additional fields describing the data. All we need for a
-          Chart.js chart is the data.
+          Chart.js chart is the data.MMM D'
           */
 
-          // convert data to a format that Chart.js expects
+          // convert data to a format that Chart.js can handle
           var data = json.data.map(function (d) {
-            return { t: d[0], y: parseFloat(d[1]).toFixed(2) }
+            return { t: d[0], y: parseFloat(d[1]) }
           })
 
           // set the canvas size based on the size of the container
@@ -51,8 +50,6 @@
 
           console.log('loaded data', data[0])
           try {
-            // based on the example at https://www.chartjs.org/samples/latest/scales/time/financial.html
-            // and documentation at https://www.chartjs.org/docs/latest/
             var ctx = cvs.getContext('2d')
             var mychart = new Chart(ctx, {
               responsive: false,
@@ -64,8 +61,8 @@
                   pointRadius: 0,
                   type: 'line',
                   fill: false,
-                  lineTension: 0.5,
-                  borderWidth: 3,
+                  lineTension: 0,
+                  borderWidth: 2,
                   borderColor: BLUE,
                 }]
               },
@@ -75,14 +72,16 @@
                     type: 'time',
                     distribution: 'series',
                     gridLines: {
-                      drawOnChartArea: false
+                      // drawOnChartArea: false
                     },
                     ticks: {
                       source: 'data',
                       autoSkip: true,
+                      autoSkipPadding: 12
                     },
                     time: {
-                      minUnit: 'hour'
+                      unit: 'day',
+                      minUnit: 'day'
                     }
                   }],
                 }
@@ -93,10 +92,28 @@
           }
         })
     </script>
+    <style>
+      body { margin: 0; paddinghttps://github.com/abachman/io-public-samples/blob/master/chart.html: 0; }
+      h1 { text-align: center; }
+      .container {
+        margin: 0 auto;
+        width: 80vw;
+        height: 480px;
+      }
+      @media only screen and (max-width: 640px) {
+        .container {
+          margin: 0 auto;
+          width: 100vw;
+          height: 480px;
+        }
+      }
+    </style>
   </head>
   <body>
+    <h1>7 Day Temperature Chart</h1>
     <div class="container">
       <canvas id="chart"></canvas>
+      <a href="https://github.com/abachman/io-public-samples/blob/master/chart.html">View Source</a>
     </div>
   </body>
 </html>
